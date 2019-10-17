@@ -51,8 +51,50 @@ router.get('/read/:idx', function(req, res, next){
     })
 });
 
-router.post('/read', function(req, res, next){
-   // var idx = req.body.
+router.post('/update', function(req, res, next){
+    var idx = req.body.idx;
+    var name = req.body.name;
+    var title = req.body.title;
+    var content = req.body.content;
+    var passwd = req.body.passwd;
+    var datas = [name, title, content, idx, passwd];
+    
+    console.log("datas:  " + datas);
+    var sql = "update board set name=?, title=?, content=?, modidate=now() where idx=? and passwd=?";
+    conn.query(sql,datas, function(err,result){
+        if(err) console.error("err: " + err);
+        if(result.affectedRows == 0){
+            res.send("<script>alert('패스워드가 일치하지 않습니다.');history.back();</script>");
+        }else{
+            res.redirect('/board/read/' + idx);
+        }
+    });
+});
+
+router.get('/page/:page', function(req, res, next){
+    var page = req.params.page;
+    var sql = "select idx, name, title, date_format(modidate, '%Y-%m-%d %H:%i:%s') modidate, date_format(regdate, '%Y-%m-%d %H:%i:%s') regdate, hit from board";
+    conn.query(sql, function(err, rows){
+        if(err) console.error("err: " + err);
+        res.render('page', {title: '게시판 리스트', rows:rows, page:page,
+            length:rows.length - 1, page_num:10, pass:true});
+    });
+});
+
+router.post('/delete', function(req, res, next){
+    var idx = req.body.idx;
+    var passwd = req.body.passwd;
+    var datas = [idx,passwd];
+
+    var sql = "delete from board where idx=? and passwd=?";
+    conn.query(sql, datas, function(err, result){
+        if(err) console.error("err: "+ err);
+        if(result.affectedRows == 0){
+            res.send("<script>alert('패스워드가 일치하지 않습니다.');history.back();</script>");
+        }else{
+            req.redirect('/board/list/');
+        }
+    });
 });
 
 module.exports = router;
